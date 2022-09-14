@@ -1,4 +1,4 @@
-# Newton Hardhat Repository
+# Newton
 
 Organization:
 
