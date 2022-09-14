@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/victorforissier/dev/newton/bounty-contracts/contracts/bounties.sol": {
-      "lastModificationDate": 1662040177952,
-      "contentHash": "b4f230a8165970ed24da3a529819d65f",
+      "lastModificationDate": 1663157900043,
+      "contentHash": "2beed005041e606d4846352985b6a216",
       "sourceName": "contracts/bounties.sol",
       "solcConfig": {
         "version": "0.8.9",
@@ -30,6 +30,7 @@
       },
       "imports": [
         "@openzeppelin/contracts/utils/math/SafeMath.sol",
+        "@openzeppelin/contracts/security/ReentrancyGuard.sol",
         "hardhat/console.sol"
       ],
       "versionPragmas": [
@@ -107,6 +108,41 @@
       ],
       "artifacts": [
         "console"
+      ]
+    },
+    "/Users/victorforissier/dev/newton/bounty-contracts/node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol": {
+      "lastModificationDate": 1662039857991,
+      "contentHash": "92f9448b23a90ea3bb932ee55cc3ccce",
+      "sourceName": "@openzeppelin/contracts/security/ReentrancyGuard.sol",
+      "solcConfig": {
+        "version": "0.8.9",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ReentrancyGuard"
       ]
     }
   }

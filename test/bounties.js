@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("Bounties functions", function () {
+describe("Bounty functions:", function () {
 	let owner;
 	let contributor;
 	let answerer;
@@ -41,143 +41,120 @@ describe("Bounties functions", function () {
 
         */
 
-	describe("#issueAndContribute", function () {
+	describe("Function: issueAndContribute", function () {
 		it("Should create bounty", async function () {
 			const _amount = ethers.utils.parseEther((1 / 10000).toString());
 			await bounties
 				.connect(contributor)
-				.issueBountyAndContribute(
-					contributor.address,
-					"MyFirstQuestion",
-					_amount,
-					{
-						value: _amount,
-					}
-				);
+				.issueBountyAndContribute("bountyId", "questionHash", {
+					value: _amount,
+				});
 			expect(await bounties.numBounties()).to.equal(1);
-			//console.log("------ Print Bounty ------");
-			//console.log(await bounties.getBounty(0));
-			//console.log("------ Done ------");
 		});
 	});
 
-	describe("#contribute", function () {
+	describe("Function: contribute", function () {
 		beforeEach(async function () {
 			expect(await bounties.numBounties()).to.equal(0);
 			expect(await bounties.getTotalSupply()).to.equal(0);
 			const _amount = ethers.utils.parseEther("1");
 			await bounties
 				.connect(contributor)
-				.issueBountyAndContribute(
-					contributor.address,
-					"MySecondQuestion",
-					_amount,
-					{
-						value: _amount,
-					}
-				);
-			expect(await bounties.numBounties()).to.equal(1);
+				.issueBountyAndContribute("bountyId", "questionHash", {
+					value: _amount,
+				});
 			totalSupply1 = await bounties.getTotalSupply();
-			//console.log("FirstTotalSupply: %s:", totalSupply1);
 			await bounties
 				.connect(random)
-				.issueBountyAndContribute(random.address, "MyThirdQuestion", _amount, {
+				.issueBountyAndContribute("bountyId2", "questionHash", {
 					value: _amount,
 				});
 			expect(await bounties.numBounties()).to.equal(2);
 			totalSupply2 = await bounties.getTotalSupply();
-			//console.log("SecondTotalSupply: %s:", totalSupply2);
 			increaseAmt = totalSupply2 - totalSupply1;
-			//console.log("IncreaseAmount: %s ... %s", increaseAmt, _amount);
 			expect(increaseAmt - _amount).to.equal(0);
 		});
 
 		it("Should contribute to bounty", async function () {
 			const _amount = ethers.utils.parseEther("1");
-			await bounties
-				.connect(contributor)
-				.contribute(contributor.address, 0, _amount, {
-					value: _amount,
-				});
-			const bounty = await bounties.getBounty(0);
+			await bounties.connect(contributor).contribute("bountyId", {
+				value: _amount,
+			});
+			const bounty = await bounties.getBounty("bountyId");
 
 			expect(bounty.contributions).to.have.lengthOf(2);
 			expect(bounty.contributions[1].amount).to.equal(_amount);
 		});
 	});
 
-	describe("#fulfill", function () {
+	describe("Function: fulfill", function () {
 		beforeEach(async function () {
 			const _amount = ethers.utils.parseEther("1");
 			await bounties
 				.connect(contributor)
-				.issueBountyAndContribute(contributor.address, "questionId", _amount, {
+				.issueBountyAndContribute("bountyId", "questionHash", {
 					value: _amount,
 				});
 		});
 
 		const test = async () => {
-			await bounties
-				.connect(answerer)
-				.answerBounty(answerer.address, 0, "answerId");
-			return await bounties.getBounty(0);
+			await bounties.connect(answerer).answerBounty("bountyId", "answerHash");
+			return await bounties.getBounty("bountyId");
 		};
 		it("Should create a bounty", async function () {
 			const bounty = await test();
 			expect(bounty.fulfillments).to.have.lengthOf(1);
 		});
 
-		it("Fulfillment should have a timestamp", async function () {
+		it("Fulfillment should have a timestamp.", async function () {
 			const bounty = await test();
 			expect(bounty.fulfillments[0].timestamp.toNumber()).to.be.a("number");
 		});
 	});
 
-	describe("#transfer", function () {
+	describe("Function: transfer", function () {
 		const _amount = ethers.utils.parseEther("100");
 		beforeEach(async function () {
 			await bounties
 				.connect(contributor)
-				.issueBountyAndContribute(contributor.address, 0, _amount, {
+				.issueBountyAndContribute("bountyId", "questionHash", {
 					value: _amount,
 				});
-			await bounties
-				.connect(answerer)
-				.answerBounty(answerer.address, 0, "answerId");
+			await bounties.connect(answerer).answerBounty("bountyId", "answerHash");
 		});
 		it("Balance should be 100 eth", async function () {
-			const bounty = await bounties.getBounty(0);
+			const bounty = await bounties.getBounty("bountyId");
 			expect(bounty.balance).to.equal(_amount);
 		});
 		it("Should have empty bounty balance", async function () {
-			await bounties.connect(owner).acceptAnswer(owner.address, 0, 0, _amount);
-			const bounty = await bounties.getBounty(0);
+			await bounties.connect(owner).acceptAnswer("bountyId", 0, _amount);
+			const bounty = await bounties.getBounty("bountyId");
 			expect(bounty.balance).to.equal(ethers.utils.parseEther("0"));
 		});
 		it("Should have different owner balance", async function () {
 			const prevBalance = await ethers.provider.getBalance(owner.address);
-			await bounties.connect(owner).acceptAnswer(owner.address, 0, 0, _amount);
+			await bounties.connect(owner).acceptAnswer("bountyId", 0, _amount);
 			const nextBalance = await ethers.provider.getBalance(owner.address);
 			expect(nextBalance == prevBalance).to.be.false;
 		});
 		it("Should have different submitter balance", async function () {
 			const prevBalance = await ethers.provider.getBalance(answerer.address);
-			await bounties.connect(owner).acceptAnswer(owner.address, 0, 0, _amount);
+			await bounties.connect(owner).acceptAnswer("bountyId", 0, _amount);
 			const nextBalance = await ethers.provider.getBalance(answerer.address);
 			expect(nextBalance == prevBalance).to.be.false;
 		});
 	});
 
-	describe("#withdraw", function () {
+	describe("Function: withdraw", function () {
 		const _amount = ethers.utils.parseEther("100");
 		beforeEach(async function () {
 			await bounties
 				.connect(contributor)
-				.issueBountyAndContribute(contributor.address, 0, _amount, {
+				.issueBountyAndContribute("bountyId", "questionHash", {
 					value: _amount,
 				});
 		});
-		it("Should withdraw to owner", async function () {
+		it("Should withdraw to owner.", async function () {
 			const prevBalance = await ethers.provider.getBalance(owner.address);
 			expect(await bounties.connect(owner).getTotalSupply()).to.equal(
 				ethers.utils.parseEther("100")
