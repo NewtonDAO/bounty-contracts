@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/victorforissier/dev/newton/bounty-contracts/contracts/bounties.sol": {
-      "lastModificationDate": 1663157900043,
-      "contentHash": "2beed005041e606d4846352985b6a216",
+      "lastModificationDate": 1663158812612,
+      "contentHash": "594313318e61fcda9c48b36abf92b025",
       "sourceName": "contracts/bounties.sol",
       "solcConfig": {
         "version": "0.8.9",

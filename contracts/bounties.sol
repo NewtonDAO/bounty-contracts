@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "hardhat/console.sol";
 
+/// @custom:security-contact victor@newton.so
 contract Bounties is ReentrancyGuard {
   using SafeMath for uint256;
 
@@ -35,8 +36,8 @@ contract Bounties is ReentrancyGuard {
   uint public numBounties; // An integer storing the total number of bounties in the contract
   mapping(string => Bounty) public bounties; // A mapping of bountyIDs to bounties
 
+  address public validator; 
   address public owner; 
-  bool public callStarted; // Ensures mutex for the entire contract
 
   // MODIFIERS
 
@@ -56,8 +57,13 @@ contract Bounties is ReentrancyGuard {
     _;
   }
 
+  modifier onlyValidator {
+    require(msg.sender == validator);
+    _;
+  }
+
   modifier onlyOwner {
-    require(msg.sender == owner);
+    require(msg.sender == validator);
     _;
   }
 
@@ -100,10 +106,9 @@ contract Bounties is ReentrancyGuard {
   }
 
   constructor() {
+    validator = msg.sender;
     owner = msg.sender;
   }
-
-  
 
   // FUNCTIONS
   /*
@@ -227,7 +232,7 @@ contract Bounties is ReentrancyGuard {
     uint _tokenAmount)
     public
     validateFulfillmentArrayIndex(_bountyId, _answerId)
-    onlyOwner
+    onlyValidator
     nonReentrant
   {
 
@@ -268,6 +273,11 @@ contract Bounties is ReentrancyGuard {
       require(bounties[_bountyId].balance >= _amount, "Not enough money to transact.");
       bounties[_bountyId].balance = bounties[_bountyId].balance.sub(_amount);
       _to.transfer(_amount);
+  }
+
+  /* @dev setValidator(): Change the validator of the contract */
+  function setValidator(address _validator) public onlyOwner{
+    validator = _validator;
   }
 
   /* 

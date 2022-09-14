@@ -6,11 +6,13 @@ describe("Bounty functions:", function () {
 	let contributor;
 	let answerer;
 	let bounties;
+	let validator;
 
 	beforeEach(async function () {
 		// Get the ContractFactory and Signers here.
 		const Bounties = await ethers.getContractFactory("Bounties");
-		[owner, contributor, answerer, random] = await ethers.getSigners();
+		[owner, contributor, answerer, random, validator] =
+			await ethers.getSigners();
 		bounties = await Bounties.deploy();
 		//console.log("Fresh Deploy of Contract to:", bounties.address);
 		//console.log("Contributor Address: ", contributor.address);
@@ -165,6 +167,13 @@ describe("Bounty functions:", function () {
 			);
 			const nextBalance = await ethers.provider.getBalance(owner.address);
 			expect(prevBalance == nextBalance).to.be.false;
+		});
+	});
+
+	describe("Function: setValidator", function () {
+		it("Should set validator", async function () {
+			await bounties.connect(owner).setValidator(validator.address);
+			expect(await bounties.validator()).to.equal(validator.address);
 		});
 	});
 });
