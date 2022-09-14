@@ -228,7 +228,7 @@ contract Bounties is ReentrancyGuard {
   */
   function acceptAnswer(
     string memory _bountyId,
-    uint _answerId, // Index in fullfilments
+    uint _answerId,
     uint _tokenAmount)
     public
     validateFulfillmentArrayIndex(_bountyId, _answerId)
