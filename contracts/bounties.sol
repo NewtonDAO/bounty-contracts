@@ -7,7 +7,6 @@ import "hardhat/console.sol";
 
 /// @custom:security-contact victor@newton.so
 contract Bounties is ReentrancyGuard {
-  using SafeMath for uint256;
 
   // STRUCTS
   struct Bounty {
@@ -34,76 +33,74 @@ contract Bounties is ReentrancyGuard {
 
   // STORAGE
   uint public numBounties; // An integer storing the total number of bounties in the contract
-  mapping(string => Bounty) public bounties; // A mapping of bountyIDs to bounties
+  mapping(uint => Bounty) public bounties; // A mapping of bountyIDs to bounties
 
   address public validator; 
   address public owner; 
 
   // MODIFIERS
-
+  modifier validateBountyArrayIndex(
+    uint _bountyId)
+  {
+    require(_bountyId < numBounties, "Bounty index is out of bounds.");
+    _;
+  }
   modifier validateContributionArrayIndex(
-    string memory _bountyId,
+    uint _bountyId,
     uint _index)
   {
-    require(_index < bounties[_bountyId].contributions.length);
+    require(_index < bounties[_bountyId].contributions.length, "Contribution index is out of bounds.");
     _;
   }
 
   modifier validateFulfillmentArrayIndex(
-    string memory _bountyId,
+    uint _bountyId,
     uint _index)
   {
-    require(_index < bounties[_bountyId].fulfillments.length);
+    require(_index < bounties[_bountyId].fulfillments.length, "Fulfillment index is out of bounds.");
     _;
   }
 
   modifier onlyValidator {
-    require(msg.sender == validator);
+    require(msg.sender == validator, "Sender is not a validator.");
     _;
   }
 
   modifier onlyOwner {
-    require(msg.sender == validator);
+    require(msg.sender == owner, "Sender is not an owner.");
     _;
   }
 
   modifier onlyContributor(
-    string memory _bountyId,
+    uint _bountyId,
     uint _contributionId
   )
   {
-    require(msg.sender == bounties[_bountyId].contributions[_contributionId].contributor);
+    require(msg.sender == bounties[_bountyId].contributions[_contributionId].contributor, "Sender did not issue this contribution.");
     _;
   }
 
   modifier hasNoAnswers(
-    string memory _bountyId)
+    uint _bountyId)
   {
-    require(!bounties[_bountyId].hasBeenAnswered);
+    require(!bounties[_bountyId].hasBeenAnswered, "The bounty as already been answered by at least one person.");
     _;
   }
   
   modifier isOverDeadline(
-    string memory _bountyId)
+    uint _bountyId)
   {
-    require(block.timestamp > bounties[_bountyId].deadline); 
+    require(block.timestamp > bounties[_bountyId].deadline, "We are not over the bounty deadline."); 
     _;
   }
 
-  modifier hasNotRefunded(
-    string memory _bountyId,
+  modifier hasNotBeenRefunded(
+    uint _bountyId,
     uint _contributionId)
   {
-    require(!bounties[_bountyId].contributions[_contributionId].refunded);
+    require(!bounties[_bountyId].contributions[_contributionId].refunded, "Bounty was already refunded.");
     _;
-  }
-
-  modifier bountyIdDoesNotExist(
-    string memory _bountyId)
-  {
-    require(bounties[_bountyId].deadline == 0);
-    _;
-  }
+  } 
 
   constructor() {
     validator = msg.sender;
@@ -116,15 +113,15 @@ contract Bounties is ReentrancyGuard {
     @param _questionHash documentId in the projet database. TODO: make hash of all question data
   */
   function issueBountyAndContribute(
-      string memory _bountyId,
       string memory _questionHash
     )
     public
     payable
-    bountyIdDoesNotExist(_bountyId)
+    returns (uint)
   {
-    issueBounty(_bountyId, _questionHash);
-    contribute(_bountyId);
+    uint bountyId = issueBounty(_questionHash);
+    contribute(bountyId);
+    return bountyId;
   }
 
   /*
@@ -132,20 +129,21 @@ contract Bounties is ReentrancyGuard {
     @param _questionHash documentId in the projet database. TODO: make hash of all question data
   */
   function issueBounty(
-    string memory _bountyId,
     string memory _questionHash)
     internal
+    returns (uint)
   {
-
-    Bounty storage newBounty = bounties[_bountyId];
+    uint bountyId = numBounties;
+    Bounty storage newBounty = bounties[bountyId];
     newBounty.issuer = payable(msg.sender);
     newBounty.deadline = block.timestamp + 86400 * 5; // 5 days
     newBounty.questionHash = _questionHash;
 
     // Increments the new total number of bounties
-    numBounties = numBounties.add(1);
+    numBounties++;
 
-    emit BountyIssued(_bountyId, payable(msg.sender), _questionHash, newBounty.deadline);
+    emit BountyIssued(bountyId, msg.sender, _questionHash, newBounty.deadline);
+    return bountyId;
   }
 
 
@@ -155,26 +153,26 @@ contract Bounties is ReentrancyGuard {
     @param _bountyId the index of the bounty
   */
   function contribute(
-      string memory _bountyId
+      uint _bountyId
     )
     public
     payable
-    nonReentrant
+    validateBountyArrayIndex(_bountyId)
   {
 
     // Contributions of 0 tokens or token ID 0 should fail
     require(msg.value > 0, 'Amount inferior to 0.'); 
-
+    require(msg.value >= 100, "Bounty cannot be < 100 wei");
     // Adds the contribution to the bounty
     bounties[_bountyId].contributions.push(Contribution(payable(msg.sender), msg.value, false)); 
 
     // Increments the balance of the bounty
-    bounties[_bountyId].balance = bounties[_bountyId].balance.add(msg.value); 
+    bounties[_bountyId].balance += msg.value; 
 
     // The contribution's index will always equal the number of existing contributions
     uint contributionId = bounties[_bountyId].contributions.length - 1; 
 
-    emit ContributionAdded(_bountyId, contributionId, payable(msg.sender), msg.value);
+    emit ContributionAdded(_bountyId, contributionId, msg.sender, msg.value);
   }
 
   /*
@@ -183,15 +181,15 @@ contract Bounties is ReentrancyGuard {
     @param _contributionId the index of the contribution being refunded
   */
   function refundContribution(
-    string memory _bountyId,
+    uint _bountyId,
     uint _contributionId)
     public
+    validateBountyArrayIndex(_bountyId)
     validateContributionArrayIndex(_bountyId, _contributionId)
     onlyContributor(_bountyId, _contributionId)
     hasNoAnswers(_bountyId)
-    hasNotRefunded(_bountyId, _contributionId)    
+    hasNotBeenRefunded(_bountyId, _contributionId)    
     isOverDeadline(_bountyId)
-    nonReentrant
   {
 
     Contribution storage contribution = bounties[_bountyId].contributions[_contributionId];
@@ -208,16 +206,16 @@ contract Bounties is ReentrancyGuard {
     @param _answerId the documentId of the answer in Narcissa. TODO: change to hash of answer
   */
   function answerBounty(
-    string memory _bountyId,
+    uint _bountyId,
     string memory _answerHash)
     public
-    nonReentrant
+    validateBountyArrayIndex(_bountyId)
   {
     bounties[_bountyId].hasBeenAnswered = true; // Disables refunds
     bounties[_bountyId].fulfillments.push(Fulfillment(_answerHash, payable(msg.sender), block.timestamp));
     uint answerIndex = bounties[_bountyId].fulfillments.length - 1;
 
-    emit BountyFulfilled(_bountyId, payable(msg.sender), _answerHash, answerIndex);
+    emit BountyFulfilled(_bountyId, msg.sender, _answerHash, answerIndex);
   }
 
   /*
@@ -227,17 +225,16 @@ contract Bounties is ReentrancyGuard {
     @param _tokenAmount how much tokens to transfer to the fulfiller 
   */
   function acceptAnswer(
-    string memory _bountyId,
+    uint _bountyId,
     uint _answerId,
     uint _tokenAmount)
     public
+    validateBountyArrayIndex(_bountyId)
     validateFulfillmentArrayIndex(_bountyId, _answerId)
     onlyValidator
-    nonReentrant
   {
-
-    Fulfillment storage fulfillment = bounties[_bountyId].fulfillments[_answerId];
     require(_tokenAmount > 0, "Token amount is inferior to 0.");
+    Fulfillment storage fulfillment = bounties[_bountyId].fulfillments[_answerId];
 
     uint protocolFee = uint((10 * _tokenAmount) / 100);
     transferTokens(_bountyId, payable(owner), protocolFee);
@@ -251,7 +248,7 @@ contract Bounties is ReentrancyGuard {
     @param _bountyId the index of the bounty
     @return Returns a tuple for the bounty
   */
-  function getBounty(string memory _bountyId) external view returns (Bounty memory) 
+  function getBounty(uint _bountyId) external view returns (Bounty memory) 
   {
     return bounties[_bountyId];
   }
@@ -264,15 +261,17 @@ contract Bounties is ReentrancyGuard {
     @param _amount the amount of tokens to transfer
   */
   function transferTokens(
-    string memory _bountyId,
+    uint _bountyId,
     address payable _to,
     uint _amount)
     internal
   {
       require(_amount > 0, "Transaction amount inferior or equal to 0"); // Sending 0 tokens should throw
       require(bounties[_bountyId].balance >= _amount, "Not enough money to transact.");
-      bounties[_bountyId].balance = bounties[_bountyId].balance.sub(_amount);
-      _to.transfer(_amount);
+      require(address(this).balance >= _amount, "Not enough funds in the contract.");
+      bounties[_bountyId].balance -= _amount;
+      (bool success, ) = _to.call{value:_amount}("");
+      require(success, "Token transfer failed.");
   }
 
   /* @dev setValidator(): Change the validator of the contract */
@@ -292,7 +291,8 @@ contract Bounties is ReentrancyGuard {
     onlyOwner
   {
     uint totalSupply = address(this).balance;
-    payable(owner).transfer(totalSupply);
+    (bool success, ) = payable(owner).call{value:totalSupply}(""); 
+    require(success, "Emergency withdraw failed.");
   }
 
   function getTotalSupply() external view returns (uint)
@@ -301,9 +301,9 @@ contract Bounties is ReentrancyGuard {
   }
 
   // EVENTS
-  event BountyIssued(string _bountyId, address payable _issuer, string _questionHash, uint _deadline);
-  event ContributionAdded(string _bountyId, uint _contributionId, address payable _contributor, uint _amount);
-  event ContributionRefunded(string _bountyId, uint _contributionId);
-  event BountyFulfilled(string _bountyId, address payable _sender, string _answerHash, uint numFulfillments);
-  event AnswerAccepted(string _bountyId, uint  _fulfillmentId, uint _tokenAmount);
+  event BountyIssued(uint bountyId, address _issuer, string _questionHash, uint _deadline);
+  event ContributionAdded(uint _bountyId, uint _contributionId, address _contributor, uint _amount);
+  event ContributionRefunded(uint _bountyId, uint _contributionId);
+  event BountyFulfilled(uint _bountyId, address _sender, string _answerHash, uint numFulfillments);
+  event AnswerAccepted(uint _bountyId, uint  _fulfillmentId, uint _tokenAmount);
 }

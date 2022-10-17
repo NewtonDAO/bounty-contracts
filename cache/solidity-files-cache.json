@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/victorforissier/dev/newton/bounty-contracts/contracts/bounties.sol": {
-      "lastModificationDate": 1663158812612,
-      "contentHash": "594313318e61fcda9c48b36abf92b025",
+      "lastModificationDate": 1666047517173,
+      "contentHash": "9dc16744d869aa9ea7f07056b1d12ca2",
       "sourceName": "contracts/bounties.sol",
       "solcConfig": {
         "version": "0.8.9",
@@ -40,43 +40,8 @@
         "Bounties"
       ]
     },
-    "/Users/victorforissier/dev/newton/bounty-contracts/node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol": {
-      "lastModificationDate": 1662039857992,
-      "contentHash": "2337f0279507b5edf14a07067adf0d05",
-      "sourceName": "@openzeppelin/contracts/utils/math/SafeMath.sol",
-      "solcConfig": {
-        "version": "0.8.9",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "SafeMath"
-      ]
-    },
     "/Users/victorforissier/dev/newton/bounty-contracts/node_modules/hardhat/console.sol": {
-      "lastModificationDate": 1662039345402,
+      "lastModificationDate": 1665507994952,
       "contentHash": "4ff3cd2f6272c9a6516e9ee4f2b967d3",
       "sourceName": "hardhat/console.sol",
       "solcConfig": {
@@ -110,8 +75,43 @@
         "console"
       ]
     },
+    "/Users/victorforissier/dev/newton/bounty-contracts/node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol": {
+      "lastModificationDate": 1665506780644,
+      "contentHash": "2337f0279507b5edf14a07067adf0d05",
+      "sourceName": "@openzeppelin/contracts/utils/math/SafeMath.sol",
+      "solcConfig": {
+        "version": "0.8.9",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "SafeMath"
+      ]
+    },
     "/Users/victorforissier/dev/newton/bounty-contracts/node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol": {
-      "lastModificationDate": 1662039857991,
+      "lastModificationDate": 1665506780643,
       "contentHash": "92f9448b23a90ea3bb932ee55cc3ccce",
       "sourceName": "@openzeppelin/contracts/security/ReentrancyGuard.sol",
       "solcConfig": {
