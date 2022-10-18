@@ -161,7 +161,6 @@ contract Bounties is ReentrancyGuard {
   {
 
     // Contributions of 0 tokens or token ID 0 should fail
-    require(msg.value > 0, 'Amount inferior to 0.'); 
     require(msg.value >= 100, "Bounty cannot be < 100 wei");
     // Adds the contribution to the bounty
     bounties[_bountyId].contributions.push(Contribution(payable(msg.sender), msg.value, false)); 
